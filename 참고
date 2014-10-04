@@ -1,0 +1,230 @@
+
+
+postUrl = http://10.73.2.25:2525/login
+
+
+@route(/login)
+class LoginAction()
+	def post():
+		user = response.getParams("user")
+		password = response.getParmase("pass")
+
+
+		check = User.query(user=user, pass=pass)
+		if(check == true)
+			return "OK"
+		else
+			return "False"
+
+
+	def get():
+		render_template('login.html')
+
+@route(/login_check)
+	def post&get():
+\
+
+
+////////////////////////////이아래 부분은 db에 save하는 로직임.//////////////////
+timer.setTimer(2000, function() {
+
+                console.log('FUCK');
+                        eventBus.send(
+                                'testdb.persistor',
+                                { action: "save", collection: "testcoll", 
+                                  document: {
+                                        "ArticleNumber": ArticleNumber+1, 
+                                        "Title": sb[i].Title, 
+                                        "Writer": sb[i].Writer,
+                                        "Id": sb[i].Id,
+                                        "Content": sb[i].Content,
+                                        "WriteDate": sb[i].WriteDate,
+                                        "ImgName": sb[i].ImgName
+                                        }
+                                },
+                                function (reply) {
+                                        console.log(reply.status);
+                                        console.log(reply._id);
+                                });
+        });
+//////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+///////////////////이 아래 전부다 backup source.////////////////////
+//////////////////시점은 mission 2 이전/////////////////////
+
+
+
+
+var console = require('vertx/console');
+var vertx = require('vertx');
+
+var server = vertx.createHttpServer();
+var routeMatcher = new vertx.RouteMatcher();
+var timer = require('vertx/timer');
+var container = require('vertx/container');
+var eventBus = require('vertx/event_bus');
+
+ var sb = [
+                                    {"ArticleNumber": "1",
+                                    "Title": "오늘도 좋은 하루!",
+                                    "Writer": "광구",
+                                    "Id": "6613d02f3e2153283f23bf621145f877",
+                                    "Content": "웹서버 연동 성공!!",
+                                    "WriteDate": "2013-09-23-10-10",
+                                    "ImgName": "photo1.jpg"},
+
+                                    {"ArticleNumber": "2",
+                                    "Title": "대출 최고 3000만원",
+                                    "Writer": "김미영 팀장",
+                                    "Id": "6326d02f3e2153266f23bf621145f734",
+                                    "Content": "김미영팀장 입니다. 고갱님께서는 최저이율로 최고 3000만원까지 30분 이내 통장입금가능합니다.",
+                                    "WriteDate": "2013-09-24-11-22",
+                                    "ImgName": "photo2.jpg"},
+
+                                    {"ArticleNumber": "3",
+                                    "Title": "MAC등록신청",
+                                    "Writer": "학생2",
+                                    "Id": "8426d02f3e2153283246bf6211454262",
+                                    "Content": "1a:2b:3c:4d:5e:6f",
+                                    "WriteDate": "2013-09-25-12-33",
+                                    "ImgName": "photo3.jpg"},
+
+                                    {"ArticleNumber": "4",
+                                    "Title": "개발을합니다",
+                                    "Writer": "광구",
+                                    "Id": "8426d02f3e2153283246bf6211452074",
+                                    "Content": "Android Development",
+                                    "WriteDate": "2014-10-1-17-40",
+                                    "ImgName": "photo4.jpeg"}
+                            ];
+
+routeMatcher.get('/', function (req) {
+
+    var output_db = function (){
+
+        container.deployModule('io.vertx~mod-mongo-persistor~2.1.0', {
+            address: 'testdb.persistor',
+            db_name: 'testdb',
+            host: '127.0.0.1', 
+            port: 27017
+        });
+
+        eventBus.send(
+            'testdb.persistor',
+            {action: "find", collection: "testcoll", matcher:{}},
+            function (reply) {
+                if (reply.status == 'ok') {
+                    var books = [];
+                    reply.results.forEach(function (el, i) {
+                        books.push(new Book(el));
+                    });
+                    req.response.putHeader('Content-Type', 'application/json');
+                    req.response.end(JSON.stringify(books));
+                } else {
+                    console.log('EXCEPTION='+reply.status);
+                    req.response.end('No data found : ');
+                }
+            });
+    };
+
+
+    function Book(el) {
+        this.id = el._id.$oid;
+        this.product = el.product_name;
+        this.ArticleNumber = el.ArticleNumber;
+        this.Title = el.Title;
+        this.Writer = el.Writer;
+        this.Id = el.Id;
+        this.Content = el.Content;
+        this.WriteDate = el.WriteDate;
+        this.ImgName = el.ImgName;
+    };
+
+    output_db();
+});
+
+routeMatcher.post('/upload', function (req) {
+    req.dataHandler(function(buffer){
+        var contentType = req.headers().get('Content-Type')
+
+        if (contentType == 'application/x-www-form-urlencoded') { 
+            var map = {};
+            java.net.URLDecoder.decode(buffer.toString(), 'UTF-8') .split('&').forEach(function(data) {
+                var s = data.split('='); 
+                map[s[0]] = s[1];
+                console.log(s[0]+':'+s[1]);
+            });
+        } else { 
+            console.log(buffer.toString());
+            //console.log('here is image area');;
+        }
+
+    });
+    // console.log('req='+req);
+    // req.expectMultiPart(true);
+
+    //     req.endHandler(function(){
+    //         //var attrs = req.formAttributes();
+            
+    //         //console.log('attrs'+attrs);
+    //         // attrs.forEach(function (a) {
+    //         //     console.log('data = ' +a);
+    //         // });
+
+    //         //var title = attrs.get('title');
+    //         //console.log('TITLE='+title);
+    //     });
+
+    //input db 
+    var input_db = function () {
+        container.deployModule('io.vertx~mod-mongo-persistor~2.1.0', {
+                address: 'testdb.persistor',
+                db_name: 'testdb'
+        });
+
+        var ArticleNumber = 0;
+
+        //timer
+        timer.setTimer(2000, function() {
+
+                console.log('FUCK');
+                for (var i=0; i<sb.length ;i++) {
+                        eventBus.send(
+                                'testdb.persistor',
+                                { action: "save", collection: "testcoll", 
+                                  document: {
+                                        "ArticleNumber": ArticleNumber+1, 
+                                        "Title": sb[i].Title, 
+                                        "Writer": sb[i].Writer,
+                                        "Id": sb[i].Id,
+                                        "Content": sb[i].Content,
+                                        "WriteDate": sb[i].WriteDate,
+                                        "ImgName": sb[i].ImgName
+                                        }
+                                },
+                                function (reply) {
+                                        console.log(reply.status);
+                                        console.log(reply._id);
+                                });
+                }
+        });
+
+    };
+    req.response.end('yoman');
+});
+
+
+routeMatcher.get('/image/:imgName', function (req) {
+        var img = req.params().get('imgName');
+        console.log(req.path());
+        console.log(req);
+        console.log(img);
+
+        req.response.sendFile('static/image/' + img);
+});
+
+server.requestHandler(routeMatcher).listen(8080);
