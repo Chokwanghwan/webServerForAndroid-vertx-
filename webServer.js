@@ -7,45 +7,10 @@ var timer = require('vertx/timer');
 var container = require('vertx/container');
 var eventBus = require('vertx/event_bus');
 
-//test data
-//서버에서 클라이언트로 데이터를 전송하는 output_db 모듈 개발 완료 시 폐기.
-var sb = [
-                                {"ArticleNumber": "1",
-                                "Title": "오늘도 좋은 하루!",
-                                "Writer": "광구",
-                                "Id": "6613d02f3e2153283f23bf621145f877",
-                                "Content": "웹서버 연동 성공!!",
-                                "WriteDate": "2013-09-23-10-10",
-                                "ImgName": "photo1.jpg"},
-
-                                {"ArticleNumber": "2",
-                                "Title": "대출 최고 3000만원",
-                                "Writer": "김미영 팀장",
-                                "Id": "6326d02f3e2153266f23bf621145f734",
-                                "Content": "김미영팀장 입니다. 고갱님께서는 최저이율로 최고 3000만원까지 30분 이내 통장입금가능합니다.",
-                                "WriteDate": "2013-09-24-11-22",
-                                "ImgName": "photo2.jpg"},
-
-                                {"ArticleNumber": "3",
-                                "Title": "MAC등록신청",
-                                "Writer": "학생2",
-                                "Id": "8426d02f3e2153283246bf6211454262",
-                                "Content": "1a:2b:3c:4d:5e:6f",
-                                "WriteDate": "2013-09-25-12-33",
-                                "ImgName": "photo3.jpg"},
-
-                                {"ArticleNumber": "4",
-                                "Title": "개발을합니다",
-                                "Writer": "광구",
-                                "Id": "8426d02f3e2153283246bf6211452074",
-                                "Content": "Android Development",
-                                "WriteDate": "2014-10-1-17-40",
-                                "ImgName": "photo4.jpeg"}
-                        ];
-
 
 routeMatcher.get('/', function (req) {
 
+    
     var output_db = function (){
 
         container.deployModule('io.vertx~mod-mongo-persistor~2.1.0', {
@@ -64,6 +29,9 @@ routeMatcher.get('/', function (req) {
                     reply.results.forEach(function (el, i) {
                         books.push(new Book(el));
                     });
+
+                   console.log('클라이언트에 넘어가는 Data = ' +JSON.stringify(books));
+
                     req.response.putHeader('Content-Type', 'application/json');
                     req.response.end(JSON.stringify(books));
                 } else {
@@ -73,11 +41,8 @@ routeMatcher.get('/', function (req) {
             });
     };
 
-
     function Book(el) {
-        this.id = el._id.$oid;
-        this.product = el.product_name;
-        this.ArticleNumber = el.ArticleNumber;
+        this.ArticleNumber = parseInt(el._id);
         this.Title = el.Title;
         this.Writer = el.Writer;
         this.Id = el.Id;
@@ -105,13 +70,10 @@ routeMatcher.post('/upload', function (req) {
 
                 map[s[0]] = s[1];
 
-                console.log("s[1] = " + s[1]);
-
                 testData.push(s[1]);
 
             });
             
-            console.log('testData = ' +testData);
             input_db(testData);
 
         } else {
@@ -121,7 +83,6 @@ routeMatcher.post('/upload', function (req) {
         }
         
     });
-    req.response.end('yoman');
 });
 
 
@@ -150,18 +111,14 @@ var input_db = function (data) {
     var inputData = [];
     inputData.push(data);
 
-    for (var i=0; i<inputData.length; i++) {
-        console.log('inputData[' +i+ '] = ' + inputData[i]);
-    }
-
     //timer
     timer.setTimer(2000, function() {
-            console.log('FUCK');
+            console.log('input db !!');
                     eventBus.send(
                             'testdb.persistor',
                             { action: "save", collection: "testcoll", 
                               document: { 
-                                    "Title": data[0], 
+                                    "Title": data[0],
                                     "Writer": data[1],
                                     "Id": data[2],
                                     "Content": data[3],
