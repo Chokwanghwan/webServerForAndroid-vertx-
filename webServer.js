@@ -61,7 +61,6 @@ routeMatcher.post('/upload', function (req) {
 
         var contentType = req.headers().get('Content-Type');
 
-
         if (contentType == 'application/x-www-form-urlencoded') { 
             var testData = [];
             var map = {};
@@ -73,13 +72,14 @@ routeMatcher.post('/upload', function (req) {
                 testData.push(s[1]);
 
             });
-            
+
             input_db(testData);
+                req.response.end('ok');
 
         } else {
             //이 부분 잠시 빠염.
-            //console.log(buffer.toString());
-            //console.log('here is image area');;
+            console.log("else 부분." +buffer.toString());
+            //console.log('here is image area');
 
             //서버에 저장되어있지 않은 이미지를 클아이언트에서 사용시 업로드 안됨. 
             //이 부분에 서버에서 넘겨주는 이미지를 서버 내 디렉터리에 저장하는 로직이 추가되어야함.
