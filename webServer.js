@@ -7,10 +7,10 @@ var timer = require('vertx/timer');
 var container = require('vertx/container');
 var eventBus = require('vertx/event_bus');
 
+var ArticleNumber = 0;
 
 routeMatcher.get('/', function (req) {
 
-    
     var output_db = function (){
 
         container.deployModule('io.vertx~mod-mongo-persistor~2.1.0', {
@@ -30,8 +30,6 @@ routeMatcher.get('/', function (req) {
                         books.push(new Book(el));
                     });
 
-                   console.log('클라이언트에 넘어가는 Data = ' +JSON.stringify(books));
-
                     req.response.putHeader('Content-Type', 'application/json');
                     req.response.end(JSON.stringify(books));
                 } else {
@@ -42,7 +40,7 @@ routeMatcher.get('/', function (req) {
     };
 
     function Book(el) {
-        this.ArticleNumber = parseInt(el._id);
+        this.ArticleNumber = ArticleNumber;
         this.Title = el.Title;
         this.Writer = el.Writer;
         this.Id = el.Id;
@@ -73,16 +71,22 @@ routeMatcher.post('/upload', function (req) {
 
             });
 
-            input_db(testData);
+
+            input_db(this.ArticleNumber ,testData);
+            ArticleNumber++;
                 req.response.end('ok');
 
         } else {
-            //이 부분 잠시 빠염.
-            console.log("else 부분." +buffer.toString());
-            //console.log('here is image area');
+            
+            // req.expectMultipart(true);
+            // //console.log("else 부분." +buffer.toString());
+            // req.uploadHandler(function (upload) {
+            //     upload.streamToFileSystem("/static/image/" + upload.filename());
+            // });
 
-            //서버에 저장되어있지 않은 이미지를 클아이언트에서 사용시 업로드 안됨. 
-            //이 부분에 서버에서 넘겨주는 이미지를 서버 내 디렉터리에 저장하는 로직이 추가되어야함.
+            // req.endHandler(function () {
+            //     req.response.end("upload complete");
+            // });
         }
         
     });
@@ -104,8 +108,8 @@ server.requestHandler(routeMatcher).listen(8080);
 
 //나중에 verticle로 재구성할 모듈
 //1) input_db : 클라이언트에서 넘어온 데이터를 mongodb에 넣는 모듈
-var input_db = function (data) {
-
+var input_db = function (articleNumber, data) {
+    var ArticleNumber = articleNumber;
     container.deployModule('io.vertx~mod-mongo-persistor~2.1.0', {
             address: 'testdb.persistor',
             db_name: 'testdb'
@@ -121,6 +125,7 @@ var input_db = function (data) {
                             'testdb.persistor',
                             { action: "save", collection: "testcoll", 
                               document: { 
+                                    "ArticleNumber": ArticleNumber,
                                     "Title": data[0],
                                     "Writer": data[1],
                                     "Id": data[2],
